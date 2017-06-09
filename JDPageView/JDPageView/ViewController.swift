@@ -44,7 +44,6 @@ class ViewController: UIViewController {
             childVcs.append(vc)
         }
         
-        // 5.创建HYPageView
         let pageView = JDPageView(frame: pageViewFrame, titles: titles, titleStyle: style, childVcs: childVcs, parentVc: self)
         
         // 6.将pageView添加到控制器的view中

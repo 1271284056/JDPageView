@@ -1,5 +1,6 @@
 //
 //  JDContentView.swift
+//  JDPageView
 //
 //  Created by 张江东 on 17/2/7.
 //  Copyright © 2017年 58kuaipai. All rights reserved.
@@ -153,7 +154,7 @@ extension JDContentView : UICollectionViewDelegate {
     }
 }
 
-// MARK:- 遵守HYTitleViewDelegate协议
+// MARK:- 遵守JDTitleViewDelegate协议
 extension JDContentView : JDTitleViewDeleate {
     func titleView(_ titleView: JDTitleView, didSelected currentIndex: Int) {
         
