@@ -17,7 +17,7 @@ class ViewController: UIViewController {
         automaticallyAdjustsScrollViewInsets = false
         
         // 1.搞定frame
-        let pageViewFrame = CGRect(x: 0, y: 64, width: view.bounds.width, height: view.bounds.height - 64)
+        let pageViewFrame = CGRect(x: 0, y: 40, width: view.bounds.width, height: view.bounds.height - 40)
         
         // 2.所有的标题
         var titles = ["游戏游戏","推荐", "手游玩法大全", "趣玩", "游戏游戏", "趣玩","娱乐手", ]

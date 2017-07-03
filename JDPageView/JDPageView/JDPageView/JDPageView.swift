@@ -7,8 +7,6 @@
 
 import UIKit
 
-let kScreenFrame : CGRect =  UIScreen.main.bounds
-let kScreenSize : CGSize = UIScreen.main.bounds.size
 //  屏幕的宽度
 let kScreenWidth = UIScreen.main.bounds.size.width
 //  屏幕的高度

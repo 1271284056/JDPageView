@@ -141,7 +141,7 @@ extension JDContentView : UICollectionViewDelegate {
             let theNum = collectionView.contentOffset.x / collectionView.bounds.width
            
                 let res = self.numFormat(num: Float(theNum ), format: "0")
-                print(" res",res)
+//                print(" res",res)
                 collectionView.scrollToItem(at: IndexPath(item: Int(res)!, section: 0), at: .left, animated: false)
                 
                 startOffsetX = collectionView.bounds.width*CGFloat(Float(res)!)
