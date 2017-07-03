@@ -24,20 +24,32 @@ class JDTitleView: UIView {
     fileprivate var titles : [String]
     fileprivate var style : JDPageStyle
     
-    fileprivate lazy var currentIndex : Int = 0
-    fileprivate lazy var titleLabels : [UILabel] = [UILabel]()
+    lazy var currentIndex : Int = 0
+    lazy var titleLabels : [UILabel] = [UILabel]()
     fileprivate lazy var scrollView : UIScrollView = {
         let scrollView = UIScrollView(frame: self.bounds)
         scrollView.showsHorizontalScrollIndicator = false
+        scrollView.contentSize = CGSize(width: self.bounds.width, height: self.bounds.height)
         scrollView.scrollsToTop = false
         return scrollView
     }()
-    fileprivate lazy var bottomLine : UIView = {
+    
+    //下面的滚动条
+     lazy var bottomLine : UIView = {
         let bottomLine = UIView()
         bottomLine.backgroundColor = self.style.bottomLineColor
         bottomLine.frame.size.height = self.style.bottomLineHeight
         return bottomLine
     }()
+    
+    
+    fileprivate lazy var bottomSubLine : UIView = {
+        let bottomLine = UIView()
+        bottomLine.backgroundColor = self.style.bottomLineColor
+        bottomLine.frame.size.height = self.style.bottomLineHeight
+        return bottomLine
+    }()
+    
     fileprivate lazy var coverView : UIView = {
         let coverView = UIView()
         coverView.backgroundColor = self.style.coverBgColor
@@ -53,19 +65,25 @@ class JDTitleView: UIView {
         
         super.init(frame: frame)
         
-        setupUI()
+        setupTheUI()
         
     }
     
     required init?(coder aDecoder: NSCoder) {
         fatalError("不能从Xib中加载")
     }
+    
+    override func layoutSubviews() {
+        super.layoutSubviews()
+//        setupTitleLabelsFrame()
+
+    }
 }
 
 
 // MARK:- 设置UI界面
 extension JDTitleView {
-    fileprivate func setupUI() {
+    fileprivate func setupTheUI() {
         // 1.添加滚动view
         addSubview(scrollView)
         
@@ -80,18 +98,26 @@ extension JDTitleView {
         
         // 5.设置CoverView
         setupCoverView()
+
     }
     
+    
+    
     private func setupTitleLabels() {
+        
         for (i, title) in titles.enumerated() {
             // 1.创建Label
             let titleLabel = UILabel()
-            
+            titleLabel.backgroundColor = UIColor.white
             // 2.设置label的属性
             titleLabel.text = title
             titleLabel.tag = i
             titleLabel.font = style.titleFont
-            titleLabel.textColor = i == 0 ? style.selectColor : style.normalColor
+            titleLabel.textColor = (i == 0 ? style.selectColor : style.normalColor)
+            
+            titleLabel.font = (i == 0 ? style.selectedTitleFont : style.titleFont)
+                        
+            
             titleLabel.textAlignment = .center
             
             // 3.添加到父控件中
@@ -105,9 +131,11 @@ extension JDTitleView {
             titleLabel.addGestureRecognizer(tapGes)
             titleLabel.isUserInteractionEnabled = true
         }
+        
+
     }
     
-    private func setupTitleLabelsFrame() {
+     func setupTitleLabelsFrame() {
         let count = titles.count
         
         for (i, label) in titleLabels.enumerated() {
@@ -116,9 +144,18 @@ extension JDTitleView {
             var x : CGFloat = 0
             let y : CGFloat = 0
             
-            if !style.isScrollEnable {
+            if !style.isScrollEnable { //不能滑动
                 w = bounds.width / CGFloat(count)
                 x = w * CGFloat(i)
+                
+                //MARK: - 竖线
+//                if i != count - 1 {
+//                    let shuLine = UIView()
+//                    shuLine.backgroundColor = UIColor.white
+//                    shuLine.frame = CGRect(x: x + w - 1, y: 0, width: 1, height: self.style.titleViewHeight)
+//                    self.addSubview(shuLine)
+//                }
+        
             } else {
                 w = (titles[i] as NSString).boundingRect(with: CGSize(width : CGFloat.greatestFiniteMagnitude, height: 0), options: .usesLineFragmentOrigin, attributes: [NSFontAttributeName : style.titleFont], context: nil).width
                 if i == 0 {
@@ -131,6 +168,8 @@ extension JDTitleView {
             
             label.frame = CGRect(x: x, y: y, width: w, height: h)
             
+            scrollView.layoutIfNeeded()
+            
             if style.isTitleScale && i == 0 {
                 label.transform = CGAffineTransform(scaleX: style.scaleRange, y: style.scaleRange)
             }
@@ -139,6 +178,7 @@ extension JDTitleView {
         if style.isScrollEnable {
             scrollView.contentSize.width = titleLabels.last!.frame.maxX + style.titleMargin * 0.5
         }
+        
     }
     
     private func setupBottomLine() {
@@ -152,6 +192,18 @@ extension JDTitleView {
         bottomLine.frame.origin.x = titleLabels.first!.frame.origin.x
         bottomLine.frame.origin.y = bounds.height - style.bottomLineHeight
         bottomLine.frame.size.width = titleLabels.first!.bounds.width
+        
+      
+        if style.isScrollEnable == false && style.bottomLineWidth > 0  {
+            var subW: CGFloat = style.bottomLineWidth
+            if subW > kScreenWidth/CGFloat(self.titles.count) {
+                subW = kScreenWidth/CGFloat(self.titles.count)
+            }
+            bottomLine.backgroundColor = UIColor.clear
+            bottomSubLine.frame = CGRect(x: (bottomLine.width - subW)/2, y: 0, width: subW, height: bottomLine.height)
+            bottomLine.addSubview(bottomSubLine)
+        }
+ 
     }
     
     private func setupCoverView() {
@@ -186,6 +238,10 @@ extension JDTitleView {
         let oldLabel = titleLabels[currentIndex]
         oldLabel.textColor = style.normalColor
         newLabel.textColor = style.selectColor
+        
+        oldLabel.font = style.titleFont
+        newLabel.font = style.selectedTitleFont
+        
         currentIndex = newLabel.tag
         
         // 2.通知内容View改变当前的位置
@@ -218,19 +274,26 @@ extension JDTitleView {
 
 extension JDTitleView : JDContentViewDelegate {
     func contentView(_ contentView: JDContentView, endScroll inIndex: Int) {
-        // 1.取出两个Label
-        let oldLabel = titleLabels[currentIndex]
+        // 1.取出newLabel
         let newLabel = titleLabels[inIndex]
         
-        // 2.改变文字的颜色
-        oldLabel.textColor = style.normalColor
+        for lb in titleLabels {
+            lb.font = style.titleFont
+            lb.textColor = style.normalColor
+        }
+        
         newLabel.textColor = style.selectColor
+        newLabel.font = style.selectedTitleFont
+        
+//        print("JDTitleView收到下面代理的inIndex-->",inIndex)
         
         // 3.记录最新的index
         currentIndex = inIndex
         
         // 4.判断是否可以滚动
         adjustPosition(newLabel)
+        self.isUserInteractionEnabled = true
+
     }
     
     
@@ -247,10 +310,17 @@ extension JDTitleView : JDContentViewDelegate {
         scrollView.setContentOffset(CGPoint(x: offsetX, y: 0), animated: true)
     }
     
+    // 次要
     func contentView(_ contentView: JDContentView, targetIndex: Int, progress: CGFloat) {
         // 1.取出两个Label
         let oldLabel = titleLabels[currentIndex]
         let newLabel = titleLabels[targetIndex]
+        if progress < 1 {
+            self.isUserInteractionEnabled = false
+        }else{
+            self.isUserInteractionEnabled = true
+        }
+        
         
         // 2.渐变文字颜色
         let selectRGB = getGRBValue(style.selectColor)
@@ -259,7 +329,23 @@ extension JDTitleView : JDContentViewDelegate {
         oldLabel.textColor = UIColor(r: selectRGB.0 - deltaRGB.0 * progress, g: selectRGB.1 - deltaRGB.1 * progress, b: selectRGB.2 - deltaRGB.2 * progress)
         newLabel.textColor = UIColor(r: normalRGB.0 + deltaRGB.0 * progress, g: normalRGB.1 + deltaRGB.1 * progress, b: normalRGB.2 + deltaRGB.2 * progress)
         
-        // 3.渐变BottomLine
+        
+        if progress > 0.5 {
+//            newLabel.textColor = style.selectColor
+//            oldLabel.textColor = style.normalColor
+            
+            oldLabel.font = style.titleFont
+            newLabel.font = style.selectedTitleFont
+        }else{
+//            newLabel.textColor = style.normalColor
+//            oldLabel.textColor = style.selectColor
+            
+            oldLabel.font = style.selectedTitleFont
+            newLabel.font = style.titleFont
+        }
+
+        
+        // 渐变BottomLine
         if style.isShowBottomLine {
             let deltaX = newLabel.frame.origin.x - oldLabel.frame.origin.x
             let deltaW = newLabel.frame.width - oldLabel.frame.width
@@ -285,11 +371,13 @@ extension JDTitleView : JDContentViewDelegate {
         }
     }
     
+    
     private func getGRBValue(_ color : UIColor) -> (CGFloat, CGFloat, CGFloat) {
         guard  let components = color.cgColor.components else {
-            fatalError("文字颜色请按照RGB方式设置")
+            fatalError("文字颜色请按照RGB方式设置 颜色不能有透明度")
         }
         
         return (components[0] * 255, components[1] * 255, components[2] * 255)
     }
+
 }
